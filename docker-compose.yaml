@@ -1,23 +1,24 @@
 version: '2.1'
 services:
-  postgres:
+  mysql:
     restart: always
-    image: postgres:10
+    image: mysql
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=shopdb
+      - MYSQL_USER=testusr
+      - MYSQL_PASSWORD=testpass
     volumes:
-      - ./postgres-data/postgres:/var/lib/postgresql/data
+      - ./db_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - 3306:3306
   app:
     restart: always
     build: .
     ports:
       - 5000:5000
     depends_on: 
-      - postgres
+      - mysql
     volumes:
       - .:/app
