@@ -1,3 +1,7 @@
+#  For detailed instructions on how to set up this project
+#  https://github.com/teelau/shopify-developer-challenge/wiki/Installation
+#  For detailed API Documentation and description of endpoints
+#  https://github.com/teelau/shopify-developer-challenge/wiki/API-Documentation
 from flask import Flask, request
 import sqlalchemy
 from sqlalchemy import Column, Integer, String, Numeric, ForeignKey
@@ -8,6 +12,7 @@ import json
 
 app = Flask(__name__)
 
+#  Initiate and maintain a connection with the database
 db_uri = 'mysql+pymysql://testusr:testpass@mysql:3306/shopdb'
 engine = sqlalchemy.create_engine(db_uri)
 engine.connect()
@@ -20,6 +25,9 @@ Base = declarative_base()
 
 
 class Product(Base):
+    """
+    Model of the products available in the shop
+    """
     __tablename__ = 'products'
     product_id = Column(Integer, primary_key=True)
     title = Column(String(32))
@@ -36,11 +44,17 @@ class Product(Base):
 
 
 class ShoppingCart(Base):
+    """
+    Model of the shopping carts available in the shop
+    """
     __tablename__ = 'shopping_carts'
     shopping_cart_id = Column(Integer, primary_key=True)
 
 
 class ShoppingCartProducts(Base):
+    """
+    Model of the relationship between products and shopping carts
+    """
     __tablename__ = 'shopping_cart_products'
     id = Column(Integer, primary_key=True)
     shopping_cart_id = Column(Integer, ForeignKey('shopping_carts.shopping_cart_id'))
