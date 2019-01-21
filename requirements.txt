@@ -1,3 +1,4 @@
 Flask==1.0.2
 SQLAlchemy==1.2.16
 pymysql
+flake8
