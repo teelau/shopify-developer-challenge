@@ -121,7 +121,6 @@ def shopping_carts():
 def shopping_cart_total_price():
     cart_id = request.args.get('cart')
     cart_result = session.query(ShoppingCart).filter(ShoppingCart.shopping_cart_id == cart_id).first()
-
     if cart_result is None:
         return 'Cart id does not exist', 404
     
@@ -141,7 +140,37 @@ def shopping_cart_total_price():
 
 @app.route('/shopping_carts/purchase', methods=['PUT'])
 def shopping_cart_purchase():
-    return 1        
+    cart_id = request.args.get('cart')
+    cart_result = session.query(ShoppingCart).filter(ShoppingCart.shopping_cart_id == cart_id).first()
+    if cart_result is None:
+        return 'Cart id does not exist', 404
+    
+    out_of_stock = session.execute(
+        ("SELECT COUNT(*) AS 'out' FROM shopping_cart_products "
+         "LEFT JOIN products "
+         "ON shopping_cart_products.product_id = products.product_id "
+         "WHERE shopping_cart_products.shopping_cart_id = :cart_id "
+         "AND products.inventory_count = 0"),
+         {"cart_id": cart_id}).first()['out']
+
+    if out_of_stock > 0:
+        return 'Cannot complete purchase, a product ran out of stock', 400
+    
+    session.execute(
+        ("UPDATE products "
+         "INNER JOIN shopping_cart_products "
+         "ON shopping_cart_products.product_id = products.product_id "
+         "SET products.inventory_count = products.inventory_count -1 "
+         "WHERE shopping_cart_products.shopping_cart_id = :cart_id "
+         "AND products.inventory_count > 0"),
+         {"cart_id": cart_id})
+    
+    session.execute(
+        ("DELETE FROM shopping_cart_products "
+         "WHERE shopping_cart_id = :cart_id "),
+         {"cart_id": cart_id})
+    session.commit()
+    return 'Completed purchase for shopping cart!'     
 
 
 if __name__ == '__main__':
