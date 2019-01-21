@@ -54,6 +54,17 @@ def jsonify(result):
     return json.dumps([p.serialize() for p in result])
 
 
+def verify_json_keys(json, keys=[]):
+    if len(keys) != len(json):
+        return False
+
+    for key in keys:
+        if key not in json.keys():
+            return False
+
+    return True
+
+
 @app.route('/')
 def welcome():
     """
@@ -62,39 +73,44 @@ def welcome():
     return 'welcome to teashopify'
 
 
-@app.route('/products', methods=['GET'])
+@app.route('/products', methods=['GET', 'POST'])
 def products():
     """
-    /products queries the shop database for available products.
-    Allows the user to query products by id or by inventory count
-
-    Parameters
-    ----------
-    Returns
-    -------
-
+    /products endpoint queries the shop database for available products.
     """
-    product_id = request.args.get('product_id')
-    product_query = session.query(Product)
-    if product_id is not None:
-        product_result = product_query.filter(Product.product_id == product_id).first()
-        if product_result is None:
-            return 'Product id does not exist', 404
-        return json.dumps(product_result.serialize())
 
-    available = request.args.get('available')
-    if available == 'true':
-        available_results = product_query.filter(Product.inventory_count != 0)
-        return jsonify(available_results), 200
-    else:
-        results = product_query  # query all product rows from products table
-        return jsonify(results), 200
+    if request.method == 'POST':
+        json_response = request.get_json()
+        if not verify_json_keys(json_response, ['title', 'price', 'inventory_count']):
+            return "Invalid or missing fields in product object", 400
+        product = Product(**json_response)
+        session.add(product)
+        session.commit()
+        return json.dumps(product.serialize()), 200
+    elif request.method == 'GET':
+        product_id = request.args.get('product_id')
+        product_query = session.query(Product)
+        if product_id is not None:
+            product_result = product_query.filter(Product.product_id == product_id).first()
+            if product_result is None:
+                return 'Product id does not exist', 404
+            return json.dumps(product_result.serialize())
+
+        available = request.args.get('available')
+        if available == 'true':
+            available_results = product_query.filter(Product.inventory_count > 0)
+            return jsonify(available_results), 200
+        else:
+            results = product_query  # query all product rows from products table
+            return jsonify(results), 200
 
 
 @app.route('/purchase', methods=['PUT'])
 def purchase():
     """
+    /purchase endpoint purchases a product from the shop database
     """
+
     product_id = request.args.get('product_id')
     product_result = session.query(Product).filter(Product.product_id == product_id).first()
     if product_result is None:
