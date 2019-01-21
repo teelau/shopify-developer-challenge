@@ -33,34 +33,49 @@ class Product(Base):
             'inventory_count': self.inventory_count
         }
 
+def jsonify(result):
+    return json.dumps([p.serialize() for p in result])
+
+# Routes
+
+# Welcome page route
 @app.route('/')
 def welcome():
-    return 'Welcome to Tea Shop'
+    return 'welcome to teashopify'
 
-@app.route('/products')
+@app.route('/products', methods=['GET'])
 def products():
+    """
+    
+    """
     product_id = request.args.get('id')
-
     if product_id is not None:
-        product_result = session.query(Product).filter(Product.id == product_id)
-        return json.dumps([p.serialize() for p in product_result])
+        product_result = session.query(Product).filter(Product.id == product_id).first()
+        if product_result is None:
+            return 'Product id does not exist', 404
+        return json.dumps(product_result.serialize())
 
     available = request.args.get('available')
-
     if available == 'true':
-        logging.info("AVAILABLE")
         available_results = session.query(Product).filter(Product.inventory_count != 0)
-        return json.dumps([p.serialize() for p in available_results])
+        return jsonify(available_results), 200
     else:
-        logging.info("HERE NOT AVAILABLE")
-        results = session.query(Product).all() # query all product rows from products table
-        return json.dumps([p.serialize() for p in results])
+        results = session.query(Product) # query all product rows from products table
+        return jsonify(results), 200
 
-    # result = engine.execute("SELECT * FROM products")
-    # metadata = sqlalchemy.MetaData()
-    # products = sqlalchemy.Table('products', metadata, autoload=True, autoload_with=engine)
-    # t = Table('testtable', metadata)
-
+@app.route('/purchase', methods=['PUT'])
+def purchase ():
+    product_id = request.args.get('id')
+    product_result = session.query(Product).filter(Product.id == product_id).first()
+    # logging.info(Product)
+    # return 1
+    if product_result is None:
+        return 'Product id does not exist', 404
+    if product_result.serialize()['inventory_count'] <= 0:
+        return 'Product is out of stock', 409
+    session.query(Product).filter(Product.id == product_id).update({'inventory_count': Product.inventory_count - 1})
+    session.commit()
+    return 'Purchased 1 title: {} product_id: {}'.format( product_result.serialize()['title'], product_id)
 
 
 if __name__ == '__main__':
