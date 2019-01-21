@@ -24,7 +24,7 @@ services:
       - .:/app
     environment:
       - MYSQL_DATABASE=shopdb
-      - MYSQL_USER=testusr
-      - MYSQL_PASSWORD=testpass
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306

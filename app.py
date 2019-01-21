@@ -55,6 +55,9 @@ def jsonify(result):
 
 
 def verify_json_keys(json, keys=[]):
+    """
+    verify_json_keys validates the json keys against a list of required keys
+    """
     if len(keys) != len(json):
         return False
 
@@ -122,9 +125,10 @@ def purchase():
     return 'Purchased 1 title: {} product_id: {}'.format(product_result.serialize()['title'], product_id)
 
 
-@app.route('/shopping_carts', methods=['POST', 'PUT', 'GET'])
+@app.route('/shopping_carts', methods=['POST', 'PUT'])
 def shopping_carts():
     """
+    /shopping_carts endpoint creates a shopping cart and adds products to carts
     """
     if request.method == 'POST':
         shopping_cart = ShoppingCart()
@@ -158,6 +162,7 @@ def shopping_carts():
 @app.route('/shopping_carts/total', methods=['GET'])
 def shopping_cart_total_price():
     """
+    /shopping_carts/total gets the total price of all products in a cart
     """
     cart_id = request.args.get('cart')
     cart_result = session.query(ShoppingCart).filter(ShoppingCart.shopping_cart_id == cart_id).first()
@@ -182,6 +187,8 @@ def shopping_cart_total_price():
 @app.route('/shopping_carts/purchase', methods=['PUT'])
 def shopping_cart_purchase():
     """
+    /shopping_carts/purchase decrements the inventory for all products in a cart by 1,
+    and removes the products from the shopping cart
     """
     cart_id = request.args.get('cart')
     cart_result = session.query(ShoppingCart).filter(ShoppingCart.shopping_cart_id == cart_id).first()
